@@ -1,0 +1,110 @@
+{
+  "llm_endpoints": {
+    "router": {
+      "host": "http://localhost:11434",
+      "model": "llama3"
+    },
+    "preparer": {
+      "host": "http://localhost:11434",
+      "model": "llama3"
+    },
+    "navigator": {
+      "host": "http://localhost:11434",
+      "model": "llama3"
+    },
+    "validator": {
+      "host": "http://localhost:11434",
+      "model": "llama3"
+    },
+    "cache": {
+      "host": "http://localhost:11434",
+      "model": "llama3"
+    },
+    "summarizer": {
+      "host": "http://localhost:11434",
+      "model": "llama3"
+    },
+    "answerer": {
+      "host": "http://localhost:11434",
+      "model": "llama3"
+    }
+  },
+  "embeddings": {
+    "provider": "sentence-transformers",
+    "model": "all-MiniLM-L6-v2"
+  },
+  "chromadb": {
+    "path": "./chroma_data",
+    "collection": "web_research"
+  },
+  "sqlite": {
+    "path": "./state.db"
+  },
+  "logging": {
+    "level": "INFO",
+    "dir": "./logs"
+  },
+  "web_search": {
+    "provider": "searxng",
+    "endpoint": "http://localhost:8888/search"
+  },
+  "server": {
+    "host": "localhost",
+    "port": 8000
+  },
+  "tool_calling": {
+    "enabled": true,
+    "max_iterations": 3,
+    "confidence_threshold": 0.6,
+    "feedback_loops": {
+      "summarizer": {
+        "enabled": true,
+        "trigger_on_gaps": true
+      },
+      "answerer": {
+        "enabled": true,
+        "min_confidence": 0.6
+      }
+    }
+  },
+  "error_recovery": {
+    "enabled": true,
+    "default_retry": {
+      "max_attempts": 3,
+      "initial_delay": 1.0,
+      "max_delay": 30.0,
+      "exponential_base": 2.0,
+      "jitter": true
+    },
+    "agent_retry": {
+      "router": {
+        "max_attempts": 2,
+        "initial_delay": 0.5
+      },
+      "cache": {
+        "max_attempts": 1,
+        "initial_delay": 0.5
+      },
+      "answerer": {
+        "max_attempts": 4,
+        "initial_delay": 2.0
+      }
+    }
+  },
+  "circuit_breaker": {
+    "threshold": 5,
+    "timeout": 60
+  },
+  "connection_pool": {
+    "limit": 100,
+    "limit_per_host": 30,
+    "connect_timeout": 10.0,
+    "sock_read_timeout": 30.0,
+    "total_timeout": 300.0,
+    "keepalive_timeout": 30.0,
+    "force_close": false,
+    "verify_ssl": true,
+    "retry_attempts": 3,
+    "retry_delay": 0.5
+  }
+}
