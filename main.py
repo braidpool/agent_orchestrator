@@ -1,21 +1,4 @@
-            # Step 8: Summarize content
-            summarized_data = {}
-            if "summarizer" in agents_to_use and validated_content:
-                summarized_data = await self.summarizer.process(query, job_id, validated_content)
-                
-                # Check if more research is needed
-                if isinstance(summarized_data.get("needs_more_research"), dict):
-                    needs_more = summarized_data["needs_more_research"]
-                    if needs_more.get("required") and needs_more.get("suggested_searches"):
-                        self.logger.info(f"Summarizer requests more research for job {job_id}")
-                        
-                        # Execute feedback loop for additional research
-                        feedback_result = await self._execute_research_feedback_loop(
-                            query, job_id, needs_more["suggested_searches"], 
-                            summarized_data, validated_content
-                        )
-                        
-                        if feedback_result.import asyncio
+import asyncio
 import aiohttp
 from aiohttp import web
 import json
@@ -26,16 +9,6 @@ import uuid
 from pathlib import Path
 import signal
 import sys
-
-import asyncio
-import aiohttp
-from aiohttp import web
-import json
-import logging
-from typing import Dict, Any, List
-from datetime import datetime
-import uuid
-from pathlib import Path
 
 # Import configuration and utilities
 from config import Config
@@ -375,25 +348,7 @@ class AgentOrchestrator:
                 content["priority"] = urls_with_metadata[i].get("priority", 99)
                 content["metadata"] = urls_with_metadata[i]
         
-        return fetched_content Any]]:
-        """Fetch content from URLs (mock implementation)"""
-        # In a real implementation, this would fetch actual web pages
-        self.logger.info(f"Fetching {len(urls_with_metadata)} URLs")
-        
-        fetched = []
-        for url_info in urls_with_metadata:
-            url = url_info["url"]
-            
-            # Mock content
-            fetched.append({
-                "url": url,
-                "title": f"Page title for {url}",
-                "content": f"This is the full content of the web page at {url}. " * 50,
-                "fetch_time": datetime.utcnow().isoformat(),
-                "status_code": 200
-            })
-        
-        return fetched
+        return fetched_content
     
     def _format_cached_data(self, cached_items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """Format cached data as document summaries"""
@@ -583,6 +538,42 @@ class AgentOrchestrator:
         
         return messages.get(error_type, messages["critical_error"])
     
+    async def _execute_research_feedback_loop(self, query: str, job_id: str, 
+                                            suggested_searches: List[str],
+                                            current_data: Dict[str, Any],
+                                            existing_content: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Execute feedback loop for additional research"""
+        self.logger.info(f"Executing research feedback loop for job {job_id}")
+        
+        try:
+            # Perform additional searches
+            additional_results = await self._perform_searches(suggested_searches)
+            
+            # Navigate and fetch new URLs
+            new_urls = []
+            if additional_results:
+                nav_result = await self.navigator.process(query, job_id, additional_results)
+                new_urls = nav_result.get("urls_to_fetch", [])
+            
+            # Fetch new content
+            new_content = []
+            if new_urls:
+                new_content = await self._fetch_urls(new_urls)
+                new_content = [c for c in new_content if not c.get("error")]
+            
+            # Combine with existing content
+            all_content = existing_content + new_content
+            
+            # Re-summarize with all content
+            if all_content:
+                improved_summary = await self.summarizer.process(query, job_id, all_content)
+                return {"improved_data": improved_summary}
+            
+        except Exception as e:
+            self.logger.error(f"Feedback loop error: {e}")
+        
+        return {"improved_data": current_data}
+    
     async def get_job_status(self, job_id: str) -> Dict[str, Any]:
         """Get status of a job"""
         if job_id in self.active_jobs:
@@ -689,6 +680,16 @@ async def handle_monitoring(request):
     
     return web.json_response(monitoring_data)
 
+async def handle_index(request):
+    """Serve the index.html file"""
+    index_path = Path(__file__).parent / "index.html"
+    if index_path.exists():
+        with open(index_path, 'r') as f:
+            content = f.read()
+        return web.Response(text=content, content_type='text/html')
+    else:
+        return web.Response(text="Index.html not found", status=404)
+
 # CORS middleware
 @web.middleware
 async def cors_middleware(request, handler):
@@ -712,6 +713,9 @@ async def init_app():
     app.router.add_get('/api/status/{job_id}', handle_status)
     app.router.add_get('/api/health', handle_health)
     app.router.add_get('/api/monitoring', handle_monitoring)
+    
+    # Serve index.html at root
+    app.router.add_get('/', handle_index)
     
     # Handle OPTIONS for CORS
     app.router.add_options('/api/query', lambda r: web.Response(status=200))

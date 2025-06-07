@@ -160,6 +160,9 @@ Respond only with valid JSON."""
                     "gaps_identified": True,
                     "follow_up_questions": []
                 }
+        except Exception as e:
+            self.logger.error(f"Error generating answer: {e}")
+            raise
     
     def _prepare_context(self, doc_summaries: List[Dict[str, Any]], 
                         consolidated: Dict[str, Any]) -> str:

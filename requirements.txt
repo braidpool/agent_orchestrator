@@ -1,0 +1,17 @@
+# Core dependencies
+aiohttp>=3.8.0
+asyncio-throttle>=1.0.0
+
+# Database and storage
+chromadb>=0.4.0
+sqlite3  # Built-in Python module
+
+# Embedding providers (optional - install based on your chosen provider)
+sentence-transformers>=2.2.0  # For local embeddings
+openai>=1.0.0  # For OpenAI embeddings
+cohere>=4.0.0  # For Cohere embeddings
+torch>=2.0.0  # Required for sentence-transformers
+
+# Utilities
+numpy>=1.24.0
+certifi>=2023.0.0

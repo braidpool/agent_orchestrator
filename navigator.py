@@ -1,5 +1,4 @@
-            await self.add_result(job_id, result)
-            await self.update_status("healthy", True)import asyncio
+import asyncio
 import json
 import logging
 from typing import Dict, Any, List, Set
