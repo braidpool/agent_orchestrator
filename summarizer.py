@@ -5,6 +5,7 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime
 from pathlib import Path
 import re
+import aiohttp
 
 from base_agent import BaseAgent
 from llm_client import LLMClient
