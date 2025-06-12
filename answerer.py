@@ -62,24 +62,6 @@ class AnswererAgent(BaseAgent):
                 answer_data.get("gaps_identified", False)
             )
             
-            # If low confidence, try to improve the answer
-            if confidence < self.min_confidence_threshold and self.tool_registry:
-                self.logger.info(f"Low confidence ({confidence:.2f}), attempting to improve answer")
-                
-                # Use tool calling to request help
-                help_result = await self.evaluate_and_request_help(
-                    {"confidence_score": confidence, "answer": answer_data["answer"]},
-                    self.min_confidence_threshold
-                )
-                
-                if help_result and help_result.get("help_needed"):
-                    # Log what help is needed
-                    for help_request in help_result["help_needed"]:
-                        self.logger.info(f"Help needed from {help_request['agent']}: {help_request['reason']}")
-                    
-                    # Add to result for orchestrator
-                    result["help_requests"] = help_result["help_needed"]
-            
             result = {
                 "job_id": job_id,
                 "query": query,
@@ -92,6 +74,24 @@ class AnswererAgent(BaseAgent):
                 "follow_up_questions": answer_data.get("follow_up_questions", []),
                 "timestamp": datetime.utcnow().isoformat()
             }
+
+            # If low confidence, try to improve the answer
+            if confidence < self.min_confidence_threshold and self.tool_registry:
+                self.logger.info(f"Low confidence ({confidence:.2f}), attempting to improve answer")
+
+                # Use tool calling to request help
+                help_result = await self.evaluate_and_request_help(
+                    {"confidence_score": confidence, "answer": answer_data["answer"]},
+                    self.min_confidence_threshold
+                )
+
+                if help_result and help_result.get("help_needed"):
+                    # Log what help is needed
+                    for help_request in help_result["help_needed"]:
+                        self.logger.info(f"Help needed from {help_request['agent']}: {help_request['reason']}")
+
+                    # Add to result for orchestrator
+                    result["help_requests"] = help_result["help_needed"]
             
             await self.add_result(job_id, result)
             await self.update_status("healthy", True)
