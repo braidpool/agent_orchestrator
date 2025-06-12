@@ -111,7 +111,4 @@ async def main():
     await monitor_shutdown()
 
 if __name__ == "__main__":
-    try:
-        asyncio.run(main())
-    except KeyboardInterrupt:
-        print("\nTest interrupted")
+    asyncio.run(main())

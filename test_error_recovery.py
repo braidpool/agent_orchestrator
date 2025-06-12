@@ -36,10 +36,13 @@ class ErrorRecoveryTester:
                 timeout=aiohttp.ClientTimeout(total=120)
             ) as response:
                 result = await response.json()
-                
+
                 # Analyze response
                 self._analyze_response(result)
-                
+
+                # Basic validation
+                assert "answer" in result, "Response missing 'answer' field"
+
                 return result
                 
         except Exception as e:
