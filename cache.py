@@ -36,14 +36,14 @@ class CacheAgent(BaseAgent):
         # Create collection with proper dimension
         collection_name = self.config["chromadb"]["collection"]
         
-        # Delete and recreate collection if dimension changed
+        # Reuse existing collection. This implementation does not verify
+        # that the embedding dimension matches the current configuration.
+        # A future improvement might recreate the collection when dimensions
+        # change.
         try:
-            existing_collection = self.client.get_collection(collection_name)
-            # Check if we need to recreate due to dimension mismatch
-            # For now, we'll keep the existing collection
-            self.collection = existing_collection
-        except:
-            # Create new collection
+            self.collection = self.client.get_collection(collection_name)
+        except Exception:
+            # Collection missing – create it
             self.collection = self.client.create_collection(
                 name=collection_name,
                 metadata={
